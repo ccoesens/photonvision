@@ -6,12 +6,30 @@ export enum PipelineType {
   ColoredShape = 3,
   AprilTag = 4,
   Aruco = 5,
-  ObjectDetection = 6
+  ObjectDetection = 6,
+  Barcode = 7,
 }
 
 export enum AprilTagFamily {
   Family36h11 = 0,
   Family16h5 = 1
+}
+
+export enum BarcodeType {
+  EAN_13,
+  EAN_8,
+  UPC_A,
+  UPC_E,
+  CODE_128,
+  CODE_39,
+  CODE_93,
+  CODABAR,
+  ITF,
+  QR_CODE,
+  DATA_MATRIX,
+  PDF_417,
+  AZTEC,
+  OTHER
 }
 
 export enum RobotOffsetPointMode {
@@ -291,6 +309,10 @@ export const DefaultArucoPipelineSettings: ArucoPipelineSettings = {
   doSingleTargetAlways: false
 };
 
+export interface BarcodePipelineSettings extends PipelineSettings {
+  pipelineType: PipelineType.Barcode;
+ barcodeType: BarcodeType;
+}
 export interface ObjectDetectionPipelineSettings extends PipelineSettings {
   pipelineType: PipelineType.ObjectDetection;
   confidence: number;
@@ -302,6 +324,16 @@ export type ConfigurableObjectDetectionPipelineSettings = Partial<
   Omit<ObjectDetectionPipelineSettings, "pipelineType">
 > &
   ConfigurablePipelineSettings;
+export const DefaultBarcodePipelineSettings: BarcodePipelineSettings = {
+  ...DefaultPipelineSettings,
+  pipelineType: PipelineType.Barcode,
+  barcodeType: BarcodeType.QR_CODE,
+  cameraGain: 20,
+  targetModel: TargetModel.InfiniteRechargeHighGoalOuter,
+  ledMode: false,
+  outputShowMultipleTargets: false,
+  cameraExposureRaw: 6
+};
 export const DefaultObjectDetectionPipelineSettings: ObjectDetectionPipelineSettings = {
   ...DefaultPipelineSettings,
   pipelineType: PipelineType.ObjectDetection,

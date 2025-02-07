@@ -17,22 +17,16 @@
 
 package org.photonvision.vision.pipeline;
 
-@SuppressWarnings("rawtypes")
-public enum PipelineType {
-    Calib3d(-2, Calibrate3dPipeline.class),
-    DriverMode(-1, DriverModePipeline.class),
-    Reflective(0, ReflectivePipeline.class),
-    ColoredShape(1, ColoredShapePipeline.class),
-    AprilTag(2, AprilTagPipeline.class),
-    Aruco(3, ArucoPipeline.class),
-    ObjectDetection(4, ObjectDetectionPipeline.class),
-    Barcode(5, BarcodePipeline.class);
+import com.fasterxml.jackson.annotation.JsonTypeName;
+import org.photonvision.vision.barcode.Barcode;
 
-    public final int baseIndex;
-    public final Class clazz;
+@JsonTypeName("BarcodePipelineSettings")
+public class BarcodePipelineSettings extends AdvancedPipelineSettings {
+    public Barcode.Type barcodeType = Barcode.Type.QR_CODE;
 
-    PipelineType(int baseIndex, Class clazz) {
-        this.baseIndex = baseIndex;
-        this.clazz = clazz;
+    public BarcodePipelineSettings() {
+        super();
+        pipelineType = PipelineType.Barcode;
+        outputShowMultipleTargets = true;
     }
 }

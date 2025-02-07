@@ -272,6 +272,10 @@ public class PipelineManager {
                 currentUserPipeline =
                         new ObjectDetectionPipeline((ObjectDetectionPipelineSettings) desiredPipelineSettings);
             }
+            case Barcode -> {
+                logger.debug("Creating Barcode Pipeline");
+                currentUserPipeline = new BarcodePipeline((BarcodePipelineSettings) desiredPipelineSettings);
+            }
             case Calib3d, DriverMode -> {}
         }
     }
@@ -362,6 +366,11 @@ public class PipelineManager {
             }
             case ObjectDetection -> {
                 var added = new ObjectDetectionPipelineSettings();
+                added.pipelineNickname = nickname;
+                return added;
+            }
+            case Barcode -> {
+                var added = new BarcodePipelineSettings();
                 added.pipelineNickname = nickname;
                 return added;
             }
