@@ -19,20 +19,18 @@ package org.photonvision.vision.pipe.impl;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
-import org.opencv.objdetect.BarcodeDetector;
+import org.opencv.objdetect.QRCodeDetector;
 import org.photonvision.vision.barcode.Barcode;
 import org.photonvision.vision.opencv.CVMat;
 import org.photonvision.vision.opencv.Releasable;
 import org.photonvision.vision.pipe.CVPipe;
 
-public class BarcodeDetectionPipe
-        extends CVPipe<CVMat, List<Barcode>, BarcodeDetectionPipeParams>
+public class BarcodeDetectionPipe extends CVPipe<CVMat, List<Barcode>, BarcodeDetectionPipeParams>
         implements Releasable {
 
-    private BarcodeDetector m_detector = new BarcodeDetector();
+    private QRCodeDetector m_detector = new QRCodeDetector();
 
     public BarcodeDetectionPipe() {
         super();
@@ -47,25 +45,23 @@ public class BarcodeDetectionPipe
             throw new RuntimeException("Barcode detector was released!");
         }
         List<String> data = new ArrayList<String>();
-        List<String> type = new ArrayList<String>();
+        // List<String> type = new ArrayList<String>();
         Mat corners = new Mat();
-        m_detector.detectAndDecodeWithType(in.getMat(),data,type,corners);
-        
-        if(data.size() != type.size()){
-            throw new RuntimeException("Data and type size mismatch");
-        }
+        m_detector.detectAndDecodeMulti(in.getMat(), data, corners);
+
         List<Barcode> barcodes = new ArrayList<>();
+        List<Point> barcodeCorners = new ArrayList<>();
+
         for (int i = 0; i < data.size(); i++) {
-            List<Point> barcodeCorners = new ArrayList<>();
             for (int j = 0; j < 4; j++) {
-                barcodeCorners.add(new Point(corners.get(i * 4 + j, 0)[0], corners.get(i * 4 + j, 1)[0]));
+                barcodeCorners.add(new Point(corners.get(i, j)[0] , corners.get(i, j)[1]));
             }
-            System.out.println("Data: "+ data.get(i));
-            barcodes.add( new Barcode(data.get(i), Barcode.typeFromString(type.get(i)),barcodeCorners));
+            barcodes.add(new Barcode(data.get(i), "QR_CODE", barcodeCorners));
         }
+
+        corners.release();
 
         return barcodes;
-
     }
 
     @Override

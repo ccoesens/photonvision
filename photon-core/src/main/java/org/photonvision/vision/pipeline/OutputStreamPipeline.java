@@ -43,6 +43,7 @@ public class OutputStreamPipeline {
     private final Draw3dArucoPipe draw3dArucoPipe = new Draw3dArucoPipe();
     private final CalculateFPSPipe calculateFPSPipe = new CalculateFPSPipe();
     private final ResizeImagePipe resizeImagePipe = new ResizeImagePipe();
+    private final GrayscalePipe grayscalePipe = new GrayscalePipe();
 
     private final long[] pipeProfileNanos = new long[12];
 

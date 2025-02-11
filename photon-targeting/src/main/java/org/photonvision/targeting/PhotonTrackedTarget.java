@@ -39,6 +39,8 @@ public class PhotonTrackedTarget
     public Transform3d bestCameraToTarget;
     public Transform3d altCameraToTarget;
     public double poseAmbiguity;
+    public String barcodeType;
+    public String barcodeData;
 
     // Corners from the min-area rectangle bounding the target
     public List<TargetCorner> minAreaRectCorners;
@@ -55,6 +57,8 @@ public class PhotonTrackedTarget
             int fiducialId,
             int classId,
             float objDetectConf,
+            String barcodeType,
+            String barcodeData,
             Transform3d pose,
             Transform3d altPose,
             double ambiguity,
@@ -78,6 +82,8 @@ public class PhotonTrackedTarget
         this.minAreaRectCorners = minAreaRectCorners;
         this.detectedCorners = detectedCorners;
         this.poseAmbiguity = ambiguity;
+        this.barcodeType = barcodeType;
+        this.barcodeData = barcodeData;
     }
 
     public PhotonTrackedTarget() {

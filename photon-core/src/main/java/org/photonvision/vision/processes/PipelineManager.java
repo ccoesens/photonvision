@@ -274,7 +274,8 @@ public class PipelineManager {
             }
             case Barcode -> {
                 logger.debug("Creating Barcode Pipeline");
-                currentUserPipeline = new BarcodePipeline((BarcodePipelineSettings) desiredPipelineSettings);
+                currentUserPipeline =
+                        new BarcodePipeline((BarcodePipelineSettings) desiredPipelineSettings);
             }
             case Calib3d, DriverMode -> {}
         }

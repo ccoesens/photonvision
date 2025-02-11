@@ -55,6 +55,8 @@ message ProtobufPhotonTrackedTarget {
 
   int32 obj_detection_id = 11;
   float obj_detection_conf = 12;
+  string barcodeType = 13;
+  string barcodeData = 14;
 }
 
 message ProtobufPhotonPipelineResult {

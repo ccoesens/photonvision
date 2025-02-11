@@ -58,6 +58,9 @@ export interface PhotonTarget {
   classId: number;
   // undefined if 3d isn't enabled
   pose?: Transform3d;
+  // -1 if not set
+  barcodeType?:string;
+  barcodeData?:string;
 }
 
 export interface MultitagResult {

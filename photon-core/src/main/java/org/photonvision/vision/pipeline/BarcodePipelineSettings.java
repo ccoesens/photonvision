@@ -18,11 +18,10 @@
 package org.photonvision.vision.pipeline;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
-import org.photonvision.vision.barcode.Barcode;
 
 @JsonTypeName("BarcodePipelineSettings")
 public class BarcodePipelineSettings extends AdvancedPipelineSettings {
-    public Barcode.Type barcodeType = Barcode.Type.QR_CODE;
+    public String barcodeType = "QR_CODE";
 
     public BarcodePipelineSettings() {
         super();

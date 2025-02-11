@@ -33,6 +33,7 @@ import org.photonvision.common.util.math.MathUtils;
 import org.photonvision.targeting.PhotonTrackedTarget;
 import org.photonvision.targeting.TargetCorner;
 import org.photonvision.vision.aruco.ArucoDetectionResult;
+import org.photonvision.vision.barcode.Barcode;
 import org.photonvision.vision.calibration.CameraCalibrationCoefficients;
 import org.photonvision.vision.frame.FrameStaticProperties;
 import org.photonvision.vision.opencv.CVShape;
@@ -68,6 +69,9 @@ public class TrackedTarget implements Releasable {
 
     private int m_classId = -1;
     private double m_confidence = -1;
+
+    private String m_barcodeType = "";
+    private String m_barcodeData = "";
 
     public TrackedTarget(
             PotentialTarget origTarget, TargetCalculationParameters params, CVShape shape) {
@@ -159,6 +163,22 @@ public class TrackedTarget implements Releasable {
         m_mainContour.mat.fromList(List.of(new Point(0, 0), new Point(0, 1), new Point(1, 0)));
         this.setTargetCorners(corners);
         m_targetOffsetPoint = new Point();
+        m_robotOffsetPoint = new Point();
+    }
+
+    public TrackedTarget(Barcode barcode) {
+        m_mainContour = new Contour(new MatOfPoint());
+        m_mainContour.mat.fromList(barcode.getCorners());
+        this.setTargetCorners(barcode.getCorners());
+        m_barcodeType = barcode.getType();
+        m_barcodeData = barcode.getData();
+        m_targetOffsetPoint = new Point();
+        for (Point corner : barcode.getCorners()) {
+            m_targetOffsetPoint.x += corner.x;
+            m_targetOffsetPoint.y += corner.y;
+        }
+        m_targetOffsetPoint.x /= barcode.getCorners().size();
+        m_targetOffsetPoint.y /= barcode.getCorners().size();
         m_robotOffsetPoint = new Point();
     }
 
@@ -262,6 +282,14 @@ public class TrackedTarget implements Releasable {
 
     public double getPoseAmbiguity() {
         return m_poseAmbiguity;
+    }
+
+    public String getBarcodeType() {
+        return m_barcodeType;
+    }
+
+    public String getBarcodeData() {
+        return m_barcodeData;
     }
 
     /**
@@ -414,6 +442,8 @@ public class TrackedTarget implements Releasable {
         ret.put("ambiguity", getPoseAmbiguity());
         ret.put("confidence", m_confidence);
         ret.put("classId", m_classId);
+        ret.put("barcodeType", m_barcodeType);
+        ret.put("barcodeData", m_barcodeData);
 
         var bestCameraToTarget3d = getBestCameraToTarget3d();
         if (bestCameraToTarget3d != null) {
@@ -457,6 +487,8 @@ public class TrackedTarget implements Releasable {
                             t.getFiducialId(),
                             t.getClassID(),
                             (float) t.getConfidence(),
+                            t.m_barcodeType,
+                            t.m_barcodeData,
                             t.getBestCameraToTarget3d(),
                             t.getAltCameraToTarget3d(),
                             t.getPoseAmbiguity(),

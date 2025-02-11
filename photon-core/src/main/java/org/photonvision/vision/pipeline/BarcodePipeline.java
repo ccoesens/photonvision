@@ -60,7 +60,7 @@ public class BarcodePipeline extends CVPipeline<CVPipelineResult, BarcodePipelin
 
     @Override
     protected void setPipeParamsImpl() {
-        var params = new BarcodeDetectionPipeParams( settings.barcodeType);
+        var params = new BarcodeDetectionPipeParams(settings.barcodeType);
         barcodeDetectionPipe.setParams(params);
     }
 
@@ -74,20 +74,20 @@ public class BarcodePipeline extends CVPipeline<CVPipelineResult, BarcodePipelin
         }
 
         CVPipeResult<List<Barcode>> tagDetectionPipeResult;
-        tagDetectionPipeResult = barcodeDetectionPipe.run(frame.processedImage);
+        tagDetectionPipeResult = barcodeDetectionPipe.run(frame.colorImage);
         sumPipeNanosElapsed += tagDetectionPipeResult.nanosElapsed;
 
         List<TrackedTarget> targetList = new ArrayList<>();
         for (Barcode detection : tagDetectionPipeResult.output) {
-            TrackedTarget target = new TrackedTarget( detection.getCorners());
+            TrackedTarget target = new TrackedTarget(detection);
+            System.out.println("Detected barcode corners: " + detection.getCorners());
             targetList.add(target);
         }
 
         var fpsResult = calculateFPSPipe.run(null);
         var fps = fpsResult.output;
 
-        return new CVPipelineResult(
-                frame.sequenceID, sumPipeNanosElapsed, fps, targetList, frame);
+        return new CVPipelineResult(frame.sequenceID, sumPipeNanosElapsed, fps, targetList, frame);
     }
 
     @Override

@@ -17,12 +17,10 @@
 
 package org.photonvision.vision.pipe.impl;
 
-import org.photonvision.vision.barcode.Barcode;
 public class BarcodeDetectionPipeParams {
-    public final Barcode.Type barcodeType;
+    public final String barcodeType;
 
-    public BarcodeDetectionPipeParams(
-        Barcode.Type barcodeType) {
+    public BarcodeDetectionPipeParams(String barcodeType) {
         this.barcodeType = barcodeType;
     }
 

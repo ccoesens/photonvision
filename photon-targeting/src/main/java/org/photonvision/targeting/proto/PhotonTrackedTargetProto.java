@@ -54,6 +54,8 @@ public class PhotonTrackedTargetProto
                 msg.getFiducialId(),
                 msg.getObjDetectionId(),
                 msg.getObjDetectionConf(),
+                msg.getBarcodeType(),
+                msg.getBarcodeData(),
                 Transform3d.proto.unpack(msg.getBestCameraToTarget()),
                 Transform3d.proto.unpack(msg.getAltCameraToTarget()),
                 msg.getPoseAmbiguity(),

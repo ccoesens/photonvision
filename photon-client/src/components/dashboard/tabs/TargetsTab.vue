@@ -52,6 +52,10 @@ const resetCurrentBuffer = () => {
                 <th class="text-center white--text">Class</th>
                 <th class="text-center white--text">Confidence</th>
               </template>
+              <template v-if="currentPipelineSettings.pipelineType === PipelineType.Barcode">
+                <th class="text-center white--text">Type</th>
+                <th class="text-center white--text">Data</th>
+              </template>
               <template v-if="!useCameraSettingsStore().currentPipelineSettings.solvePNPEnabled">
                 <th class="text-center white--text">Pitch &theta;&deg;</th>
                 <th class="text-center white--text">Yaw &theta;&deg;</th>
@@ -100,6 +104,18 @@ const resetCurrentBuffer = () => {
                 class="text-center white--text"
               >
                 {{ target.confidence.toFixed(2) }}
+              </td>
+              <td
+                v-if="currentPipelineSettings.pipelineType === PipelineType.Barcode"
+                class="text-center white--text"
+              >
+                {{ target?.barcodeType }}
+              </td>
+              <td
+                v-if="currentPipelineSettings.pipelineType === PipelineType.Barcode"
+                class="text-center white--text"
+              >
+                {{ target?.barcodeData }}
               </td>
               <template v-if="!useCameraSettingsStore().currentPipelineSettings.solvePNPEnabled">
                 <td class="text-center">{{ target.pitch.toFixed(2) }}&deg;</td>
