@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useCameraSettingsStore } from "@/stores/settings/CameraSettingsStore";
-import { BarcodePipelineSettings, type ObjectDetectionPipelineSettings, PipelineType } from "@/types/PipelineTypes";
+import { type BarcodePipelineSettings, type ObjectDetectionPipelineSettings, PipelineType, BarcodeType } from "@/types/PipelineTypes";
 import { computed, getCurrentInstance } from "vue";
 import { useStateStore } from "@/stores/StateStore";
 
@@ -24,20 +24,7 @@ const interactiveCols = computed(() =>
     <pv-select
       v-model="currentPipelineSettings.barcodeType"
       label="Target family"
-      :items="['EAN_13',
-        'EAN_8',
-        'PC_A',
-        'UPC_E',
-        'CODE_128',
-        'CODE_39',
-        'CODE_93',
-        'CODABAR',
-        'ITF',
-        'QR_CODE',
-        'DATA_MATRIX',
-        'PDF_417',
-        'AZTEC',
-        'OTHER']"
+      :items="Object.values(BarcodeType).filter((type) => typeof type === 'string')"
       :select-cols="interactiveCols"
       @input="(value) => useCameraSettingsStore().changeCurrentPipelineSetting({ barcodeType: value }, false)"
     />

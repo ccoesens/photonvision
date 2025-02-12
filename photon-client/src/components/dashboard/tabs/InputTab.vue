@@ -16,18 +16,7 @@ const cameraRotations = computed(() =>
     disabled: useCameraSettingsStore().isCSICamera ? [1, 3].includes(i) : false
   }))
 );
-
-const streamDivisors = [1, 2, 4, 6];
-const getFilteredStreamDivisors = (): number[] => {
-  const currentResolutionWidth = useCameraSettingsStore().currentVideoFormat.resolution.width;
-  return streamDivisors.filter(
-    (x) =>
-      useCameraSettingsStore().isDriverMode ||
-      !useSettingsStore().gpuAccelerationEnabled ||
-      currentResolutionWidth / x < 400
-  );
-};
-const getNumberOfSkippedDivisors = () => streamDivisors.length - getFilteredStreamDivisors().length;
+const streamDivisors = [1, 2, 4, 6, 8];
 
 const cameraResolutions = computed(() =>
   useCameraSettingsStore().currentCameraSettings.validVideoFormats.map(
@@ -36,9 +25,13 @@ const cameraResolutions = computed(() =>
 );
 const handleResolutionChange = (value: number) => {
   useCameraSettingsStore().changeCurrentPipelineSetting({ cameraVideoModeIndex: value }, false);
-
-  useCameraSettingsStore().changeCurrentPipelineSetting({ streamingFrameDivisor: getNumberOfSkippedDivisors() }, false);
-  useCameraSettingsStore().currentPipelineSettings.streamingFrameDivisor = 0;
+  const currentResolution = useCameraSettingsStore().currentVideoFormat.resolution;
+  const newDivisorIndex = streamDivisors.findIndex(
+    (divisor) => currentResolution.width / divisor <= 320 && currentResolution.height / divisor <= 240
+  );
+  const newDivisor = newDivisorIndex !== -1 ? newDivisorIndex : 2; // Default to index 2 if no suitable divisor is found
+  useCameraSettingsStore().changeCurrentPipelineSetting({ streamingFrameDivisor: newDivisor }, false);
+  useCameraSettingsStore().currentPipelineSettings.streamingFrameDivisor = newDivisor;
 
   if (!useCameraSettingsStore().isCurrentVideoFormatCalibrated && !useCameraSettingsStore().isDriverMode) {
     useCameraSettingsStore().changeCurrentPipelineSetting({ solvePNPEnabled: false }, true);
@@ -46,7 +39,6 @@ const handleResolutionChange = (value: number) => {
 };
 
 const streamResolutions = computed(() => {
-  const streamDivisors = getFilteredStreamDivisors();
   const currentResolution = useCameraSettingsStore().currentVideoFormat.resolution;
   return streamDivisors.map(
     (x) =>
@@ -57,118 +49,90 @@ const streamResolutions = computed(() => {
   );
 });
 const handleStreamResolutionChange = (value: number) => {
-  useCameraSettingsStore().changeCurrentPipelineSetting(
-    { streamingFrameDivisor: value + getNumberOfSkippedDivisors() },
-    false
-  );
+  useCameraSettingsStore().changeCurrentPipelineSetting({ streamingFrameDivisor: value }, false);
 };
 
 const interactiveCols = computed(() =>
   (getCurrentInstance()?.proxy.$vuetify.breakpoint.mdAndDown || false) &&
-  (!useStateStore().sidebarFolded || useCameraSettingsStore().isDriverMode)
+    (!useStateStore().sidebarFolded || useCameraSettingsStore().isDriverMode)
     ? 8
     : 7
 );
+
+const isStreamResolutionTooHigh = computed(() => {
+  const currentResolution = useCameraSettingsStore().currentVideoFormat.resolution;
+  const divisor = streamDivisors[useCameraSettingsStore().currentPipelineSettings.streamingFrameDivisor];
+  return currentResolution.width / divisor > 320 || currentResolution.height / divisor > 240;
+});
 </script>
 
 <template>
   <div>
-    <pv-switch
-      v-model="useCameraSettingsStore().currentPipelineSettings.cameraAutoExposure"
-      class="pt-2"
-      label="Auto Exposure"
-      :switch-cols="interactiveCols"
+    <pv-switch v-model="useCameraSettingsStore().currentPipelineSettings.cameraAutoExposure" class="pt-2"
+      label="Auto Exposure" :switch-cols="interactiveCols"
       tooltip="Enables or Disables camera automatic adjustment for current lighting conditions"
-      @input="(args) => useCameraSettingsStore().changeCurrentPipelineSetting({ cameraAutoExposure: args }, false)"
-    />
-    <pv-slider
-      v-model="useCameraSettingsStore().currentPipelineSettings.cameraExposureRaw"
-      :disabled="useCameraSettingsStore().currentCameraSettings.pipelineSettings.cameraAutoExposure"
-      label="Exposure"
+      @input="(args) => useCameraSettingsStore().changeCurrentPipelineSetting({ cameraAutoExposure: args }, false)" />
+
+    <pv-slider v-model="useCameraSettingsStore().currentPipelineSettings.cameraExposureRaw"
+      :disabled="useCameraSettingsStore().currentCameraSettings.pipelineSettings.cameraAutoExposure" label="Exposure"
       tooltip="Directly controls how long the camera shutter remains open. Units are dependant on the underlying driver."
-      :min="useCameraSettingsStore().minExposureRaw"
-      :max="useCameraSettingsStore().maxExposureRaw"
-      :slider-cols="interactiveCols"
-      :step="1"
-      @input="(args) => useCameraSettingsStore().changeCurrentPipelineSetting({ cameraExposureRaw: args }, false)"
-    />
-    <pv-slider
-      v-model="useCameraSettingsStore().currentPipelineSettings.cameraBrightness"
-      label="Brightness"
-      :min="0"
-      :max="100"
-      :slider-cols="interactiveCols"
-      @input="(args) => useCameraSettingsStore().changeCurrentPipelineSetting({ cameraBrightness: args }, false)"
-    />
-    <pv-slider
-      v-if="useCameraSettingsStore().currentPipelineSettings.cameraGain >= 0"
-      v-model="useCameraSettingsStore().currentPipelineSettings.cameraGain"
-      label="Camera Gain"
-      tooltip="Controls camera gain, similar to brightness"
-      :min="0"
-      :max="100"
-      :slider-cols="interactiveCols"
-      @input="(args) => useCameraSettingsStore().changeCurrentPipelineSetting({ cameraGain: args }, false)"
-    />
-    <pv-slider
-      v-if="useCameraSettingsStore().currentPipelineSettings.cameraRedGain !== -1"
-      v-model="useCameraSettingsStore().currentPipelineSettings.cameraRedGain"
-      label="Red AWB Gain"
-      :min="0"
-      :max="100"
+      :min="useCameraSettingsStore().minExposureRaw" :max="useCameraSettingsStore().maxExposureRaw"
+      :slider-cols="interactiveCols" :step="1"
+      @input="(args) => useCameraSettingsStore().changeCurrentPipelineSetting({ cameraExposureRaw: args }, false)" />
+
+    <pv-slider v-model="useCameraSettingsStore().currentPipelineSettings.cameraBrightness" label="Brightness" :min="0"
+      :max="100" :slider-cols="interactiveCols"
+      @input="(args) => useCameraSettingsStore().changeCurrentPipelineSetting({ cameraBrightness: args }, false)" />
+
+    <pv-slider v-if="useCameraSettingsStore().currentPipelineSettings.cameraGain >= 0"
+      v-model="useCameraSettingsStore().currentPipelineSettings.cameraGain" label="Camera Gain"
+      tooltip="Controls camera gain, similar to brightness" :min="0" :max="100" :slider-cols="interactiveCols"
+      @input="(args) => useCameraSettingsStore().changeCurrentPipelineSetting({ cameraGain: args }, false)" />
+
+    <pv-slider v-if="useCameraSettingsStore().currentPipelineSettings.cameraRedGain !== -1"
+      v-model="useCameraSettingsStore().currentPipelineSettings.cameraRedGain" label="Red AWB Gain" :min="0" :max="100"
       :slider-cols="interactiveCols"
       tooltip="Controls red automatic white balance gain, which affects how the camera captures colors in different conditions"
-      @input="(args) => useCameraSettingsStore().changeCurrentPipelineSetting({ cameraRedGain: args }, false)"
-    />
-    <pv-slider
-      v-if="useCameraSettingsStore().currentPipelineSettings.cameraBlueGain !== -1"
-      v-model="useCameraSettingsStore().currentPipelineSettings.cameraBlueGain"
-      label="Blue AWB Gain"
-      :min="0"
-      :max="100"
-      :slider-cols="interactiveCols"
+      @input="(args) => useCameraSettingsStore().changeCurrentPipelineSetting({ cameraRedGain: args }, false)" />
+
+    <pv-slider v-if="useCameraSettingsStore().currentPipelineSettings.cameraBlueGain !== -1"
+      v-model="useCameraSettingsStore().currentPipelineSettings.cameraBlueGain" label="Blue AWB Gain" :min="0"
+      :max="100" :slider-cols="interactiveCols"
       tooltip="Controls blue automatic white balance gain, which affects how the camera captures colors in different conditions"
-      @input="(args) => useCameraSettingsStore().changeCurrentPipelineSetting({ cameraBlueGain: args }, false)"
-    />
-    <pv-switch
-      v-model="useCameraSettingsStore().currentPipelineSettings.cameraAutoWhiteBalance"
-      label="Auto White Balance"
-      :switch-cols="interactiveCols"
+      @input="(args) => useCameraSettingsStore().changeCurrentPipelineSetting({ cameraBlueGain: args }, false)" />
+
+    <pv-switch v-model="useCameraSettingsStore().currentPipelineSettings.cameraAutoWhiteBalance"
+      label="Auto White Balance" :switch-cols="interactiveCols"
       tooltip="Enables or Disables camera automatic adjustment for current lighting conditions"
-      @input="(args) => useCameraSettingsStore().changeCurrentPipelineSetting({ cameraAutoWhiteBalance: args }, false)"
-    />
-    <pv-slider
-      v-model="useCameraSettingsStore().currentPipelineSettings.cameraWhiteBalanceTemp"
+      @input="(args) => useCameraSettingsStore().changeCurrentPipelineSetting({ cameraAutoWhiteBalance: args }, false)" />
+
+    <pv-slider v-model="useCameraSettingsStore().currentPipelineSettings.cameraWhiteBalanceTemp"
       :disabled="useCameraSettingsStore().currentPipelineSettings.cameraAutoWhiteBalance"
-      label="White Balance Temperature"
-      :min="useCameraSettingsStore().minWhiteBalanceTemp"
-      :max="useCameraSettingsStore().maxWhiteBalanceTemp"
-      :slider-cols="interactiveCols"
-      @input="(args) => useCameraSettingsStore().changeCurrentPipelineSetting({ cameraWhiteBalanceTemp: args }, false)"
-    />
-    <pv-select
-      v-model="useCameraSettingsStore().currentPipelineSettings.inputImageRotationMode"
+      label="White Balance Temperature" :min="useCameraSettingsStore().minWhiteBalanceTemp"
+      :max="useCameraSettingsStore().maxWhiteBalanceTemp" :slider-cols="interactiveCols"
+      @input="(args) => useCameraSettingsStore().changeCurrentPipelineSetting({ cameraWhiteBalanceTemp: args }, false)" />
+
+    <pv-select 
+      v-model="useCameraSettingsStore().currentPipelineSettings.inputImageRotationMode" 
       label="Orientation"
       tooltip="Rotates the camera stream. Rotation not available when camera has been calibrated."
-      :items="cameraRotations"
-      :select-cols="interactiveCols"
-      @input="(args) => useCameraSettingsStore().changeCurrentPipelineSetting({ inputImageRotationMode: args }, false)"
-    />
-    <pv-select
-      v-model="useCameraSettingsStore().currentPipelineSettings.cameraVideoModeIndex"
+      :items="cameraRotations" :select-cols="interactiveCols"
+      @input="(args) => useCameraSettingsStore().changeCurrentPipelineSetting({ inputImageRotationMode: args }, false)" />
+
+    <pv-select 
+      v-model="useCameraSettingsStore().currentPipelineSettings.cameraVideoModeIndex" 
       label="Resolution"
-      tooltip="Resolution and FPS the camera should directly capture at"
+      tooltip="Resolution and FPS the camera should directly capture at" 
       :items="cameraResolutions"
-      :select-cols="interactiveCols"
-      @input="(args) => handleResolutionChange(args)"
-    />
-    <pv-select
-      v-model="useCameraSettingsStore().currentPipelineSettings.streamingFrameDivisor"
+      :select-cols="interactiveCols" @input="(args) => handleResolutionChange(args)" />
+
+    <pv-select v-model="useCameraSettingsStore().currentPipelineSettings.streamingFrameDivisor"
       label="Stream Resolution"
       tooltip="Resolution to which camera frames are downscaled for streaming to the dashboard"
-      :items="streamResolutions"
-      :select-cols="interactiveCols"
-      @input="(args) => handleStreamResolutionChange(args)"
-    />
+      :items="streamResolutions" :select-cols="interactiveCols"
+      :icon="isStreamResolutionTooHigh ? 'mdi-alert-circle-outline' : ''"
+      :color="isStreamResolutionTooHigh ? 'red' : 'white'"
+      :icon-tooltip="isStreamResolutionTooHigh ? 'Stream resolution is too high and may cause robot network throttling' : ''"
+      @input="(args) => handleStreamResolutionChange(args)" />
   </div>
 </template>

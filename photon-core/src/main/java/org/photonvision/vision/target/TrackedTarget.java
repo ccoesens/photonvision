@@ -34,6 +34,7 @@ import org.photonvision.targeting.PhotonTrackedTarget;
 import org.photonvision.targeting.TargetCorner;
 import org.photonvision.vision.aruco.ArucoDetectionResult;
 import org.photonvision.vision.barcode.Barcode;
+import org.photonvision.vision.barcode.Barcode.Type;
 import org.photonvision.vision.calibration.CameraCalibrationCoefficients;
 import org.photonvision.vision.frame.FrameStaticProperties;
 import org.photonvision.vision.opencv.CVShape;
@@ -70,7 +71,7 @@ public class TrackedTarget implements Releasable {
     private int m_classId = -1;
     private double m_confidence = -1;
 
-    private String m_barcodeType = "";
+    private int m_barcodeType = Type.OTHER.ordinal();
     private String m_barcodeData = "";
 
     public TrackedTarget(
@@ -170,7 +171,7 @@ public class TrackedTarget implements Releasable {
         m_mainContour = new Contour(new MatOfPoint());
         m_mainContour.mat.fromList(barcode.getCorners());
         this.setTargetCorners(barcode.getCorners());
-        m_barcodeType = barcode.getType();
+        m_barcodeType = barcode.getType().ordinal();
         m_barcodeData = barcode.getData();
         m_targetOffsetPoint = new Point();
         for (Point corner : barcode.getCorners()) {
@@ -284,8 +285,8 @@ public class TrackedTarget implements Releasable {
         return m_poseAmbiguity;
     }
 
-    public String getBarcodeType() {
-        return m_barcodeType;
+    public Type getBarcodeType() {
+        return Barcode.Type.values()[m_barcodeType];
     }
 
     public String getBarcodeData() {

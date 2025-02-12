@@ -16,20 +16,21 @@ export enum AprilTagFamily {
 }
 
 export enum BarcodeType {
-  EAN_13,
-  EAN_8,
-  UPC_A,
-  UPC_E,
-  CODE_128,
-  CODE_39,
-  CODE_93,
-  CODABAR,
-  ITF,
-  QR_CODE,
-  DATA_MATRIX,
-  PDF_417,
-  AZTEC,
-  OTHER
+  EAN_13=0,
+  EAN_8=1,
+  UPC_A=2,
+  UPC_E=3,
+  CODE_128=4,
+  CODE_39=5,
+  CODE_93=6,
+  CODABAR=7,
+  ITF=8,
+  QR_CODE=9,
+  DATA_MATRIX=10,
+  PDF_417=11,
+  AZTEC=12,
+  OTHER=13,
+  ALL=14,
 }
 
 export enum RobotOffsetPointMode {
@@ -309,10 +310,16 @@ export const DefaultArucoPipelineSettings: ArucoPipelineSettings = {
   doSingleTargetAlways: false
 };
 
+
 export interface BarcodePipelineSettings extends PipelineSettings {
   pipelineType: PipelineType.Barcode;
- barcodeType: BarcodeType;
+  barcodeType: BarcodeType;
 }
+export type ConfigurableBarcodePipelineSettings = Partial<
+  Omit<BarcodePipelineSettings, "pipelineType">
+> &
+BarcodePipelineSettings;
+
 export interface ObjectDetectionPipelineSettings extends PipelineSettings {
   pipelineType: PipelineType.ObjectDetection;
   confidence: number;
@@ -370,6 +377,7 @@ export type ActivePipelineSettings =
   | AprilTagPipelineSettings
   | ArucoPipelineSettings
   | ObjectDetectionPipelineSettings
+  | BarcodePipelineSettings
   | Calibration3dPipelineSettings;
 
 export type ActiveConfigurablePipelineSettings =
@@ -378,4 +386,5 @@ export type ActiveConfigurablePipelineSettings =
   | ConfigurableAprilTagPipelineSettings
   | ConfigurableArucoPipelineSettings
   | ConfigurableObjectDetectionPipelineSettings
+  | ConfigurableBarcodePipelineSettings
   | ConfigurableCalibration3dPipelineSettings;

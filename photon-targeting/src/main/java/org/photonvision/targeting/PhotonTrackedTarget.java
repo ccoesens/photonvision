@@ -39,7 +39,7 @@ public class PhotonTrackedTarget
     public Transform3d bestCameraToTarget;
     public Transform3d altCameraToTarget;
     public double poseAmbiguity;
-    public String barcodeType;
+    public int barcodeType;
     public String barcodeData;
 
     // Corners from the min-area rectangle bounding the target
@@ -57,7 +57,7 @@ public class PhotonTrackedTarget
             int fiducialId,
             int classId,
             float objDetectConf,
-            String barcodeType,
+            int barcodeType,
             String barcodeData,
             Transform3d pose,
             Transform3d altPose,
