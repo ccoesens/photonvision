@@ -74,13 +74,12 @@ public class BarcodePipeline extends CVPipeline<CVPipelineResult, BarcodePipelin
         }
 
         CVPipeResult<List<Barcode>> tagDetectionPipeResult;
-        tagDetectionPipeResult = barcodeDetectionPipe.run(frame.colorImage);
+        tagDetectionPipeResult = barcodeDetectionPipe.run(frame.processedImage);
         sumPipeNanosElapsed += tagDetectionPipeResult.nanosElapsed;
 
         List<TrackedTarget> targetList = new ArrayList<>();
         for (Barcode detection : tagDetectionPipeResult.output) {
             TrackedTarget target = new TrackedTarget(detection);
-            System.out.println("Detected barcode corners: " + detection.getCorners());
             targetList.add(target);
         }
 

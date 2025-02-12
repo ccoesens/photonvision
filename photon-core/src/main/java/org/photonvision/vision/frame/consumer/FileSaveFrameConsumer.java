@@ -39,7 +39,7 @@ public class FileSaveFrameConsumer implements Consumer<CVMat> {
     private final Logger logger = new Logger(FileSaveFrameConsumer.class, LogGroup.General);
 
     // match type's values from the FMS.
-    private static final String[] matchTypes = {"N/A", "P", "Q", "E", "EV"};
+    private static final String[] matchTypes = {"NA", "P", "Q", "E", "EV"};
 
     // Formatters to generate unique, timestamped file names
     private static final String FILE_PATH = ConfigManager.getInstance().getImageSavePath().toString();
@@ -111,9 +111,9 @@ public class FileSaveFrameConsumer implements Consumer<CVMat> {
             String saveFilePath = cameraPath + File.separator + fileName + FILE_EXTENSION;
 
             if (image == null || image.getMat() == null || image.getMat().empty()) {
-                Imgcodecs.imwrite(saveFilePath, StaticFrames.LOST_MAT);
+                System.out.println(Imgcodecs.imwrite(saveFilePath, StaticFrames.LOST_MAT));
             } else {
-                Imgcodecs.imwrite(saveFilePath, image.getMat());
+                System.out.println(Imgcodecs.imwrite(saveFilePath, image.getMat()));
             }
 
             savedImagesCount++;

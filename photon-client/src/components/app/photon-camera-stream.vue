@@ -5,6 +5,7 @@ import loadingImage from "@/assets/images/loading-transparent.svg";
 import type { StyleValue } from "vue/types/jsx";
 import PvIcon from "@/components/common/pv-icon.vue";
 import type { UiCameraConfiguration } from "@/types/SettingTypes";
+import { useCameraSettingsStore } from "@/stores/settings/CameraSettingsStore";
 
 const props = defineProps<{
   streamType: "Raw" | "Processed";
@@ -58,9 +59,9 @@ const overlayStyle = computed<StyleValue>(() => {
 
 const handleCaptureClick = () => {
   if (props.streamType === "Raw") {
-    props.cameraSettings.pipelineSettings[props.cameraSettings.currentPipelineIndex].saveInputSnapshot();
+    useCameraSettingsStore().saveInputSnapshot(props.cameraSettings.uniqueName);
   } else {
-    props.cameraSettings.pipelineSettings[props.cameraSettings.currentPipelineIndex].saveOutputSnapshot();
+    useCameraSettingsStore().saveOutputSnapshot(props.cameraSettings.uniqueName);
   }
 };
 const handlePopoutClick = () => {

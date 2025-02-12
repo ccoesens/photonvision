@@ -34,6 +34,7 @@ public class BarcodeDetectionPipe extends CVPipe<CVMat, List<Barcode>, BarcodeDe
 
     public BarcodeDetectionPipe() {
         super();
+        m_detector.setUseAlignmentMarkers(true);
     }
 
     @Override
