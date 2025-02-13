@@ -18,10 +18,9 @@
 package org.photonvision.vision.pipe.impl;
 
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.List;
-import java.util.Map;
 
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
 import org.opencv.core.Point;
@@ -31,30 +30,20 @@ import org.photonvision.vision.opencv.CVMat;
 import org.photonvision.vision.opencv.Releasable;
 import org.photonvision.vision.pipe.CVPipe;
 
-import com.google.zxing.BarcodeFormat;
-import com.google.zxing.BinaryBitmap;
-import com.google.zxing.DecodeHintType;
-import com.google.zxing.MultiFormatReader;
-import com.google.zxing.Result;
-import com.google.zxing.ResultPoint;
-import com.google.zxing.common.HybridBinarizer;
-import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
-
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import javax.imageio.ImageIO;
+import boofcv.factory.fiducial.ConfigQrCode;
+import boofcv.factory.fiducial.FactoryFiducial;
+import boofcv.abst.fiducial.QrCodePreciseDetector;
+import boofcv.alg.fiducial.qrcode.QrCode;
+import boofcv.struct.image.GrayU8;
 
 public class BarcodeDetectionPipe
         extends CVPipe<CVMat, List<Barcode>, BarcodeDetectionPipeParams>
         implements Releasable {
-
-    private MultiFormatReader m_reader = new MultiFormatReader();
+    private QrCodePreciseDetector<GrayU8> detector;
 
     public BarcodeDetectionPipe() {
         super();
-        Map<DecodeHintType, Object> hints = new EnumMap<>(DecodeHintType.class);
-        hints.put(DecodeHintType.POSSIBLE_FORMATS, List.of(BarcodeFormat.DATA_MATRIX, BarcodeFormat.QR_CODE, BarcodeFormat.AZTEC));
-        m_reader.setHints(hints);
+        detector = FactoryFiducial.qrcode(ConfigQrCode.fast(), GrayU8.class);
     }
 
     @Override
@@ -66,30 +55,28 @@ public class BarcodeDetectionPipe
 
         List<Barcode> barcodes = new ArrayList<>();
         try {
-            // Convert Mat to BufferedImage
+            // Convert Mat to GrayU8 directly
             Mat mat = in.getMat();
-            MatOfByte matOfByte = new MatOfByte();
-            Imgcodecs.imencode(".png", mat, matOfByte);
-            byte[] byteArray = matOfByte.toArray();
-            BufferedImage image = null;
-            try (ByteArrayInputStream bais = new ByteArrayInputStream(byteArray)) {
-                image = ImageIO.read(bais);
-            }
-            if (image == null) {
-                System.out.println("BufferedImage is null.");
+            if (mat.empty()) {
+                System.out.println("Input Mat is empty.");
                 return barcodes;
             }
 
-            // Use ZXing to detect barcodes
-            BinaryBitmap bitmap = new BinaryBitmap(new HybridBinarizer(new BufferedImageLuminanceSource(image)));
-            Result result = m_reader.decodeWithState(bitmap);
+            GrayU8 gray = new GrayU8(mat.width(), mat.height());
+            byte[] data = new byte[mat.width() * mat.height()];
+            mat.get(0, 0, data);
+            gray.data = data;
 
-            // Create Barcode object
-            List<Point> barcodeCorners = new ArrayList<>();
-            for (ResultPoint p : result.getResultPoints()) {
-                barcodeCorners.add(new Point(p.getX(), p.getY()));
+            // Use BoofCV to detect barcodes
+            detector.process(gray);
+
+            for (QrCode code : detector.getDetections()) {
+                List<Point> barcodeCorners = new ArrayList<>();
+                for (int i = 0; i < code.bounds.size(); i++) {
+                    barcodeCorners.add(new Point(code.bounds.get(i).x, code.bounds.get(i).y));
+                }
+                barcodes.add(new Barcode(code.message, Barcode.Type.QR_CODE, barcodeCorners));
             }
-            barcodes.add(new Barcode(result.getText(), Barcode.typeFromString(result.getBarcodeFormat().toString()), barcodeCorners));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -108,6 +95,6 @@ public class BarcodeDetectionPipe
 
     @Override
     public void release() {
-        m_reader = null;
+        detector = null;
     }
 }
