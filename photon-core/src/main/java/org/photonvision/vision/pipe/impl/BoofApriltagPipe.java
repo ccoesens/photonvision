@@ -27,23 +27,21 @@ import org.photonvision.vision.opencv.CVMat;
 import org.photonvision.vision.opencv.Releasable;
 import org.photonvision.vision.pipe.CVPipe;
 
-import boofcv.factory.fiducial.ConfigAztecCode;
-import boofcv.factory.fiducial.ConfigQrCode;
+import boofcv.factory.fiducial.ConfigHammingMarker;
 import boofcv.factory.fiducial.FactoryFiducial;
-import boofcv.abst.fiducial.AztecCodePreciseDetector;
-import boofcv.abst.fiducial.QrCodePreciseDetector;
-import boofcv.alg.fiducial.aztec.AztecCode;
-import boofcv.alg.fiducial.qrcode.QrCode;
+import boofcv.factory.fiducial.HammingDictionary;
+import boofcv.abst.fiducial.FiducialDetector;
+
 import boofcv.struct.image.GrayU8;
 
-public class BarcodeDetectionPipe
+public class BoofApriltagPipe
         extends CVPipe<CVMat, List<Barcode>, BarcodeDetectionPipeParams>
         implements Releasable {
 
-    private AztecCodePreciseDetector<GrayU8> detector = FactoryFiducial.aztec(ConfigAztecCode.fast(), GrayU8.class);
-    
+    ConfigHammingMarker configMarker = ConfigHammingMarker.loadDictionary(HammingDictionary.APRILTAG_36h11);
+    FiducialDetector<GrayU8> detector = FactoryFiducial.squareHamming(configMarker, null, GrayU8.class);
 
-    public BarcodeDetectionPipe() {
+    public BoofApriltagPipe() {
         super();
     }
 
@@ -69,14 +67,17 @@ public class BarcodeDetectionPipe
             gray.data = data;
 
             // Use BoofCV to detect barcodes
-            detector.process(gray);
+            detector.detect(gray);
 
-            for (AztecCode code : detector.getDetections()) {
+            for (int i = 0; i < detector.totalFound(); i++) {
+
                 List<Point> barcodeCorners = new ArrayList<>();
-                for (int i = 0; i < code.bounds.size(); i++) {
-                    barcodeCorners.add(new Point(code.bounds.get(i).x, code.bounds.get(i).y));
+                var bounds = detector.getBounds(i, null);
+
+                for (int j = 0; j < bounds.size(); j++) {
+                    barcodeCorners.add(new Point(bounds.get(j).x, bounds.get(j).y));
                 }
-                barcodes.add(new Barcode(code.message, Barcode.Type.QR_CODE, barcodeCorners));
+                barcodes.add(new Barcode(detector.getMessage(i), Barcode.Type.QR_CODE, barcodeCorners));
             }
         } catch (Exception e) {
             e.printStackTrace();
