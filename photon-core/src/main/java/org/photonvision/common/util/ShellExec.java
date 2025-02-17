@@ -30,7 +30,7 @@ public class ShellExec {
     private final boolean readOutput;
     private final boolean readError;
     private StreamGobbler errorGobbler, outputGobbler;
-
+    
     public ShellExec() {
         this(false, false);
     }
@@ -84,9 +84,9 @@ public class ShellExec {
         // Also, exec may object if it does not have an executable file as the first thing,
         // so having bash here makes it happy provided bash is installed and in path.
         String[] commands = {"bash", "-c", command};
-
+        
         Process process = r.exec(commands);
-
+        
         // Consume streams, older jvm's had a memory leak if streams were not read,
         // some other jvm+OS combinations may block unless streams are consumed.
         int retcode = doProcess(wait, process);
@@ -145,8 +145,9 @@ public class ShellExec {
         exitCode = 0;
         if (wait) {
             try {
-                process.waitFor();
-                exitCode = process.exitValue();
+                exitCode = process.waitFor();
+                errorGobbler.join();
+                outputGobbler.join(); 
             } catch (InterruptedException ignored) {
             }
         }
